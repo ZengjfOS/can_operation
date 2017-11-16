@@ -96,7 +96,7 @@ def message_received(client, server, message):
             msg = can_recv_msg();
             if (msg):
                 hardware_ctl_data["hardware_ctl"]["recv_data"] = msg.data[0];
-                hardware_ctl_data["hardware_ctl"]["ctl_id"] = str(msg.arbitration_id);
+                hardware_ctl_data["hardware_ctl"]["ctl_id"] = msg.arbitration_id & 0x7f;
                 hardware_ctl_data["hardware_ctl"]["behavior"] = 1;
                 server.send_message_to_all(json.dumps(hardware_ctl_data));
             else:

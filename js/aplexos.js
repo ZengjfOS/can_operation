@@ -50,9 +50,10 @@ function init() {
     ws.onmessage = function(e) {
         var tmp_rev_data = JSON.parse(e.data);  // Get recv data
 
-        if (tmp_rev_data["hardware_ctl"]["can_id"] == can_id1)
+        //console.log("onmessage "+ tmp_rev_data);
+        if (tmp_rev_data["hardware_ctl"]["ctl_id"] == can_id1)
             hardware_ctl_data11["hardware_ctl"]["start_bit"] = tmp_rev_data["hardware_ctl"]["start_bit"];
-        else if (tmp_rev_data["hardware_ctl"]["can_id"] == can_id2)
+        else if (tmp_rev_data["hardware_ctl"]["ctl_id"] == can_id2)
             hardware_ctl_data22["hardware_ctl"]["start_bit"] = tmp_rev_data["hardware_ctl"]["start_bit"];
 
 
@@ -62,30 +63,32 @@ function init() {
 
             for (var i = 0; i < 4; i++)
             {
-                if (tmp_rev_data["hardware_ctl"]["can_id"] == can_id1)
+                var img;
+                if (tmp_rev_data["hardware_ctl"]["ctl_id"] == can_id1)
                 {
-                    var img = document.getElementsByName("module1_led_" + color_array[i]);
+                    img = document.getElementsByName("module1_led_" + color_array[i]);
                 }
-                else if (tmp_rev_data["hardware_ctl"]["can_id"] == can_id2)
+                else if (tmp_rev_data["hardware_ctl"]["ctl_id"] == can_id2)
                 {
-                    var img = document.getElementsByName("module2_led_" + color_array[i]);
+                    img = document.getElementsByName("module2_led_" + color_array[i]);
                 }
 
+                //console.log(img);
                 if ((gpio_in >> i) & 1)
                 {
                     img[0].src = "img/led_" + color_array[i] + ".png";
                 }
                 else
                 {
-                    img.src = "img/power_gray.png";
+                    img[0].src = "img/power_gray.png";
                 }
             }
         }
         else if (tmp_rev_data["hardware_ctl"]["behavior"] == 2)
         {
-            if (tmp_rev_data["hardware_ctl"]["can_id"] == can_id1)
+            if (tmp_rev_data["hardware_ctl"]["ctl_id"] == can_id1)
                 hardware_ctl_data11["hardware_ctl"]["send_data"] = tmp_rev_data["hardware_ctl"]["send_data"];
-            else if (tmp_rev_data["hardware_ctl"]["can_id"] == can_id2)
+            else if (tmp_rev_data["hardware_ctl"]["ctl_id"] == can_id2)
                 hardware_ctl_data22["hardware_ctl"]["send_data"] = tmp_rev_data["hardware_ctl"]["send_data"];
         }
     };
@@ -142,24 +145,25 @@ function gpio_output_high(gpio_num, can_id) {
     gpio_value(1, gpio_num, 2, can_id);
     if (can_id == can_id1)
         ws.send(JSON.stringify(hardware_ctl_data11));
-    else (can_id == can_id2)
+    else if (can_id == can_id2)
         ws.send(JSON.stringify(hardware_ctl_data22));
+
+    console.log(can_id);
 }
 
 function gpio_output_low(gpio_num, can_id) {
     gpio_value(0, gpio_num, 2, can_id);
     if (can_id == can_id1)
         ws.send(JSON.stringify(hardware_ctl_data11));
-    else (can_id == can_id2)
+    else if (can_id == can_id2)
         ws.send(JSON.stringify(hardware_ctl_data22));
 }
 
 function get_di_state(can_id){
-    //var can_id_tmp = document.getElementById("can_id").value;
     gpio_value(0, 0, 1, can_id);
     if (can_id == can_id1)
         ws.send(JSON.stringify(hardware_ctl_data11));
-    else (can_id == can_id2)
+    else if(can_id == can_id2)
         ws.send(JSON.stringify(hardware_ctl_data22));
 }
 
@@ -229,16 +233,24 @@ function set_DO_Value(img) {
     }
 }
 
+var send_di_flag = 0;
 function timedCount()
 {
     if (conneted == 1)
     {
-        get_di_state(11);
-        get_di_state(22);
-
+        if (send_di_flag)
+        {
+            get_di_state(11);
+            send_di_flag = !send_di_flag;
+        }
+        else
+        {
+            get_di_state(22);
+            send_di_flag = !send_di_flag;
+        }
     }
 
-    setTimeout("timedCount()", 5000);
+    setTimeout("timedCount()", 1000);
 }
 
 function can_start_fun() {
