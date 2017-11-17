@@ -287,7 +287,7 @@ $(function(){
 
     footerPosition();
     $(window).resize(footerPosition);
-    timedCount();
+    // timedCount();
 
     // auto to center
     if (document.documentElement.clientHeight > 738) {
