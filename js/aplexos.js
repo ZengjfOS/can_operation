@@ -80,7 +80,7 @@ function init() {
                 }
                 else
                 {
-                    img[0].src = "img/power_gray.png";
+                    img[0].src = "img/led_gray.png";
                 }
             }
         }
