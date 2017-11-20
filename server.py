@@ -80,7 +80,7 @@ def send_receive_can_data(name, arg):
             can_behavior = hardware_ctl_data["hardware_ctl"]["behavior"];
             ctl_id = hardware_ctl_data["hardware_ctl"]["ctl_id"] | (can_behavior << 7 )
             ctl_data = hardware_ctl_data["hardware_ctl"]["send_data"]
-            print("id: %d, data: %d, queue length" % (ctl_id, ctl_data));
+            # print("id: %d, data: %d, queue length" % (ctl_id, ctl_data));
             can_send_msg(ctl_id, ctl_data);
             if (hardware_ctl_data["hardware_ctl"]["behavior"] == 1):
                 hardware_ctl_data["hardware_ctl"]["recv_data"] = 0;
@@ -104,7 +104,7 @@ def send_receive_can_data(name, arg):
             can_behavior = hardware_ctl_data["hardware_ctl"]["behavior"];
             ctl_id = hardware_ctl_data["hardware_ctl"]["ctl_id"] | (can_behavior << 7 )
             ctl_data = hardware_ctl_data["hardware_ctl"]["send_data"]
-            print("id: %d, data: %d, queue length" % (ctl_id, ctl_data));
+            # print("id: %d, data: %d, queue length" % (ctl_id, ctl_data));
             can_send_msg(ctl_id, ctl_data);
             if (hardware_ctl_data["hardware_ctl"]["behavior"] == 1):
                 hardware_ctl_data["hardware_ctl"]["recv_data"] = 0;
@@ -209,7 +209,7 @@ def message_received(client, server, message):
         can_behavior = hardware_ctl_data["hardware_ctl"]["behavior"];
         ctl_id = can_id | (can_behavior << 7 );
         ctl_data = hardware_ctl_data["hardware_ctl"]["send_data"];
-        print("can_id : %d  can_behavior ; %d     ctl_data : %d" % (ctl_id, can_behavior, ctl_data));
+        # print("can_id : %d  can_behavior ; %d     ctl_data : %d" % (ctl_id, can_behavior, ctl_data));
 
         can_messages_send.put(hardware_ctl_data)
 
