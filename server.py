@@ -7,10 +7,12 @@ import time;
 import json;
 import _thread as thread; 
 from multiprocessing import Queue;
+import queue
 
 DO_num = 0;
 
 can_messages = Queue(maxsize = 100)
+can_messages_send = Queue(maxsize = 100)
 
 '''
 hardware_ctl_data = {
@@ -64,7 +66,7 @@ def can_recv_msg():
     msg = None;
     bus = can.interface.Bus();
     try:
-        msg = bus.recv(1);
+        msg = bus.recv(0.5);
         return msg;
     except can.CanError:
         print("Message NOT rese");
@@ -73,6 +75,30 @@ def can_recv_msg():
 def send_receive_can_data(name, arg):
     print("send receive thread");
     while True:
+        if can_messages_send.empty() != True: 
+            hardware_ctl_data = can_messages_send.get();
+            can_behavior = hardware_ctl_data["hardware_ctl"]["behavior"];
+            ctl_id = hardware_ctl_data["hardware_ctl"]["ctl_id"] | (can_behavior << 7 )
+            ctl_data = hardware_ctl_data["hardware_ctl"]["send_data"]
+            # print("id: %d, data: %d, queue length" % (ctl_id, ctl_data));
+            can_send_msg(ctl_id, ctl_data);
+            if (hardware_ctl_data["hardware_ctl"]["behavior"] == 1):
+                hardware_ctl_data["hardware_ctl"]["recv_data"] = 0;
+                msg = can_recv_msg();
+                if (msg):
+                    hardware_ctl_data["hardware_ctl"]["recv_data"] = msg.data[0];
+                    hardware_ctl_data["hardware_ctl"]["ctl_id"] = msg.arbitration_id & 0x7f;
+                    hardware_ctl_data["hardware_ctl"]["behavior"] = 1;
+                    server.send_message_to_all(json.dumps(hardware_ctl_data));
+                else:
+                    print("recvf errno");
+            elif (hardware_ctl_data["hardware_ctl"]["behavior"] == 2):
+                server.send_message_to_all(json.dumps(hardware_ctl_data));
+
+            time.sleep(0.2);
+
+            continue
+
         if can_messages.empty() != True:
             hardware_ctl_data = can_messages.get();
             can_behavior = hardware_ctl_data["hardware_ctl"]["behavior"];
@@ -95,7 +121,7 @@ def send_receive_can_data(name, arg):
 
             time.sleep(0.2);
         else:
-            time.sleep(0.5);
+            time.sleep(0.01);
 
 def get_current_status_can_data(name, arg):
     print("send receive thread");
@@ -131,7 +157,7 @@ def get_current_status_can_data(name, arg):
             })
 
         # hardware_ctl_data["hardware_ctl"]["ctl_id"] = 139
-        can_messages.put(
+        can_messages.put( 
             {
                 "hardware_ctl" : {
                     "dev_name": "can0",
@@ -145,7 +171,7 @@ def get_current_status_can_data(name, arg):
                 }
             })
 
-        time.sleep(1);
+        time.sleep(0.5);
 
 # websocket
 # Called for every client connecting (after handshake)
@@ -183,9 +209,9 @@ def message_received(client, server, message):
         can_behavior = hardware_ctl_data["hardware_ctl"]["behavior"];
         ctl_id = can_id | (can_behavior << 7 );
         ctl_data = hardware_ctl_data["hardware_ctl"]["send_data"];
-        #print("can_id : %d  can_behavior ; %d     ctl_data : %d" % (ctl_id, can_behavior, ctl_data));
+        # print("can_id : %d  can_behavior ; %d     ctl_data : %d" % (ctl_id, can_behavior, ctl_data));
 
-        can_messages.put(hardware_ctl_data)
+        can_messages_send.put(hardware_ctl_data)
 
 # init can
 can_setup("can0", "1000000");
